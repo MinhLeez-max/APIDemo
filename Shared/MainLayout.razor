@@ -1,0 +1,51 @@
+@inherits LayoutComponentBase
+
+<div class="main-layout">
+    <nav class="sidebar">
+        <div class="brand">QLKH</div>
+
+        <button class="nav-btn" @onclick='() => NavigateTo("/")'>
+            Tổng quan
+        </button>
+
+        <button class="nav-btn" @onclick='() => NavigateTo("/courses")'>
+            Khóa học
+        </button>
+    </nav>
+
+    <main class="content">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px">
+            <div class="title"><p class="eyebrow">System</p><h2>QLKH Admin</h2></div>
+            <div>
+                <a href="/login" class="ghost-btn" style="margin-right:8px">Login</a>
+                <button class="primary-btn" @onclick="Logout">Logout</button>
+            </div>
+        </div>
+        <Shared.Toast />
+        @Body
+    </main>
+</div>
+
+@code {
+    [Inject] protected NavigationManager Nav { get; set; } = default!;
+
+    void NavigateTo(string url)
+    {
+        Nav.NavigateTo(url);
+    }
+
+    [Inject] protected APIdemo.ClientServices.ClientAuthService AuthService { get; set; } = default!;
+    [Inject] protected APIdemo.ClientServices.NotificationService Notifier { get; set; } = default!;
+
+    async Task Logout()
+    {
+        await AuthService.ClearTokenAsync();
+        Notifier.Notify("Đã đăng xuất");
+        Nav.NavigateTo("/login");
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await AuthService.InitializeAsync();
+    }
+}

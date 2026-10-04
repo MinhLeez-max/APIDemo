@@ -1,0 +1,217 @@
+@page "/courses"
+@inject IHttpClientFactory HttpFactory
+@inject APIdemo.ClientServices.ClientAuthService AuthService
+
+<header class="topbar">
+    <div class="title">
+        <p class="eyebrow">Quản lý</p>
+        <h2>Khóa học</h2>
+    </div>
+    <div class="topbar-actions">
+        <button class="ghost-btn" @onclick="LoadCourses">Làm mới</button>
+        <button class="primary-btn" @onclick='() => NavigateTo("/")'>Trở về</button>
+    </div>
+</header>
+
+<div class="course-panel">
+    <div class="course-form panel">
+        <div class="panel-header"><h3>Thêm khóa học mới</h3></div>
+        <input class="field" @bind="newTitle" placeholder="Tên khóa học" />
+        <input class="field" @bind="newCategory" placeholder="Danh mục" />
+        <textarea class="field" @bind="newDescription" placeholder="Mô tả"></textarea>
+        <input class="field" type="number" @bind="newPrice" placeholder="Giá" />
+        <div style="display:flex; gap:8px;">
+            <button class="primary-btn" @onclick="CreateCourse">Lưu</button>
+            <button class="ghost-btn" @onclick="ClearForm">Hủy</button>
+        </div>
+    </div>
+
+    <div class="course-list">
+        <div class="panel">
+            <div class="panel-header" style="align-items:center; display:flex; justify-content:space-between; gap:12px">
+                <h3>Danh sách khóa học</h3>
+                <div style="display:flex; gap:8px; align-items:center">
+                    <input class="field" style="width:200px" placeholder="Tìm theo tên" @bind="filterTitle" @oninput="(e)=>ApplyFilters()" />
+                    <input class="field" style="width:160px" placeholder="Danh mục" @bind="filterCategory" @oninput="(e)=>ApplyFilters()" />
+                    <select class="field" style="width:100px" @onchange="OnPageSizeChanged">
+                        <option value="5">5 / trang</option>
+                        <option value="10">10 / trang</option>
+                        <option value="20">20 / trang</option>
+                    </select>
+                </div>
+            </div>
+
+            @if (courses == null || isLoading)
+            {
+                <p>Đang tải...</p>
+            }
+            else if (!filtered.Any())
+            {
+                <p>Không có khóa học khớp.</p>
+            }
+            else
+            {
+                <table class="courses-table">
+                    <thead>
+                        <tr>
+                            <th @onclick="() => ToggleSort('Title')">Tiêu đề @(SortIndicator("Title"))</th>
+                            <th @onclick="() => ToggleSort('Category')">Danh mục @(SortIndicator("Category"))</th>
+                            <th @onclick="() => ToggleSort('Price')">Giá @(SortIndicator("Price"))</th>
+                            <th>Trạng thái</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var c in PagedItems)
+                        {
+                            <tr>
+                                <td>@c.Title</td>
+                                <td>@(c?.Description ?? String.Empty)</td>
+                                <td>@c.Price.ToString("C0")</td>
+                                <td>@(c.IsPublished ? "Đã xuất bản" : "Nháp")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+
+                <div class="pagination">
+                    <button class="ghost-btn" @onclick="FirstPage" disabled="@(currentPage == 1)">«</button>
+                    <button class="ghost-btn" @onclick="PrevPage" disabled="@(currentPage == 1)">‹</button>
+                    @for (int p = 1; p <= totalPages; p++)
+                    {
+                        <button class="nav-btn @(p==currentPage?"active":"")" @onclick="(()=>GoToPage(p))">@p</button>
+                    }
+                    <button class="ghost-btn" @onclick="NextPage" disabled="@(currentPage == totalPages)">›</button>
+                    <button class="ghost-btn" @onclick="LastPage" disabled="@(currentPage == totalPages)">»</button>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    // data
+    List<APIdemo.DTOs.CourseDto> courses = new();
+    List<APIdemo.DTOs.CourseDto> filtered = new();
+    IEnumerable<APIdemo.DTOs.CourseDto> PagedItems => filtered.Skip((currentPage - 1) * pageSize).Take(pageSize);
+
+    // form
+    string newTitle = string.Empty;
+    string newCategory = string.Empty;
+    string newDescription = string.Empty;
+    decimal newPrice = 0;
+
+    bool isLoading = false;
+
+    // filters & paging
+    string filterTitle = string.Empty;
+    string filterCategory = string.Empty;
+    int pageSize = 5;
+    int currentPage = 1;
+    int totalPages => Math.Max(1, (int)Math.Ceiling((double)filtered.Count / pageSize));
+
+    // sorting
+    string sortBy = "Title";
+    bool sortAsc = true;
+
+    [Inject] NavigationManager Nav { get; set; } = default!;
+    [Inject] APIdemo.ClientServices.NotificationService Notifier { get; set; } = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCourses();
+    }
+
+    async Task LoadCourses()
+    {
+        isLoading = true;
+        StateHasChanged();
+        try
+        {
+            var client = HttpFactory.CreateClient("ApiClient");
+            AuthService.ConfigureClient(client);
+            var result = await client.GetFromJsonAsync<List<APIdemo.DTOs.CourseDto>>("/api/Courses");
+            courses = result ?? new List<APIdemo.DTOs.CourseDto>();
+            ApplyFilters();
+        }
+        catch (Exception ex)
+        {
+            Notifier.Notify("Không thể tải khóa học: " + ex.Message);
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    async Task CreateCourse()
+    {
+        try
+        {
+            var client = HttpFactory.CreateClient("ApiClient");
+            AuthService.ConfigureClient(client);
+            var dto = new APIdemo.DTOs.CourseCreateDto { Title = newTitle, Description = newDescription, Price = newPrice, CategorySlug = newCategory };
+            var res = await client.PostAsJsonAsync("/api/Courses", dto);
+            if (res.IsSuccessStatusCode)
+            {
+                Notifier.Notify("Thêm khóa học thành công");
+                await LoadCourses();
+                ClearForm();
+            }
+            else
+            {
+                var txt = await res.Content.ReadAsStringAsync();
+                Notifier.Notify("Lỗi khi thêm: " + txt);
+            }
+        }
+        catch (Exception ex)
+        {
+            Notifier.Notify("Lỗi khi thêm: " + ex.Message);
+        }
+    }
+
+    void ApplyFilters()
+    {
+        IEnumerable<APIdemo.DTOs.CourseDto> q = courses;
+        if (!string.IsNullOrWhiteSpace(filterTitle)) q = q.Where(c => !string.IsNullOrEmpty(c.Title) && c.Title.Contains(filterTitle, StringComparison.OrdinalIgnoreCase));
+        if (!string.IsNullOrWhiteSpace(filterCategory)) q = q.Where(c => (!string.IsNullOrEmpty(c.Title) && c.Title.Contains(filterCategory, StringComparison.OrdinalIgnoreCase)) || (c.Description?.Contains(filterCategory, StringComparison.OrdinalIgnoreCase) ?? false));
+
+        q = sortBy switch
+        {
+            "Price" => sortAsc ? q.OrderBy(c => c.Price) : q.OrderByDescending(c => c.Price),
+            "Category" => sortAsc ? q.OrderBy(c => c.Title) : q.OrderByDescending(c => c.Title),
+            _ => sortAsc ? q.OrderBy(c => c.Title) : q.OrderByDescending(c => c.Title),
+        };
+
+        filtered = q.ToList();
+        currentPage = 1;
+    }
+
+    void OnPageSizeChanged(ChangeEventArgs e)
+    {
+        if (int.TryParse(e?.Value?.ToString(), out var v)) pageSize = v;
+        currentPage = 1;
+    }
+
+    void ToggleSort(string column)
+    {
+        if (sortBy == column) sortAsc = !sortAsc; else { sortBy = column; sortAsc = true; }
+        ApplyFilters();
+    }
+
+    string SortIndicator(string column) => sortBy == column ? (sortAsc ? "↑" : "↓") : string.Empty;
+
+    void PrevPage() { if (currentPage > 1) currentPage--; }
+    void NextPage() { if (currentPage < totalPages) currentPage++; }
+    void FirstPage() { currentPage = 1; }
+    void LastPage() { currentPage = totalPages; }
+    void GoToPage(int p) { currentPage = Math.Clamp(p, 1, totalPages); }
+
+    void ClearForm()
+    {
+        newTitle = newCategory = newDescription = string.Empty;
+        newPrice = 0;
+    }
+
+    void NavigateTo(string url) => Nav.NavigateTo(url);
+}

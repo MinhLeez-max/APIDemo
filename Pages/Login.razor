@@ -1,0 +1,64 @@
+@page "/login"
+@inject IHttpClientFactory HttpFactory
+@inject APIdemo.ClientServices.ClientAuthService AuthService
+@inject APIdemo.ClientServices.NotificationService Notifier
+@inject NavigationManager Nav
+
+<h3>Đăng nhập</h3>
+
+<EditForm Model="loginModel" OnValidSubmit="HandleLogin">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+    <div class="panel">
+        <div class="field-row">
+            <InputText @bind-Value="loginModel.Email" placeholder="Email" class="field" />
+        </div>
+        <div class="field-row">
+            <InputText type="password" @bind-Value="loginModel.Password" placeholder="Mật khẩu" class="field" />
+        </div>
+        <div style="display:flex; gap:8px; margin-top:8px;">
+            <button class="primary-btn" type="submit">Đăng nhập</button>
+            <button class="ghost-btn" type="button" @onclick="GoRegister">Tạo tài khoản</button>
+        </div>
+    </div>
+</EditForm>
+
+@code{
+    LoginModel loginModel = new();
+
+    async Task HandleLogin()
+    {
+        try
+        {
+            var client = HttpFactory.CreateClient("ApiClient");
+            var res = await client.PostAsJsonAsync("/api/Auth/login", new { email = loginModel.Email, password = loginModel.Password });
+            if (!res.IsSuccessStatusCode) { Notifier.Notify("Đăng nhập thất bại"); return; }
+            var payload = await res.Content.ReadFromJsonAsync<System.Text.Json.JsonElement>();
+            string? token = null;
+            if (payload.ValueKind != System.Text.Json.JsonValueKind.Undefined && payload.TryGetProperty("token", out var t))
+            {
+                token = t.GetString();
+            }
+            if (!string.IsNullOrWhiteSpace(token))
+            {
+                await AuthService.SaveTokenAsync(token);
+                Notifier.Notify("Đăng nhập thành công");
+                Nav.NavigateTo("/");
+            }
+        }
+        catch (Exception ex)
+        {
+            Notifier.Notify("Lỗi: " + ex.Message);
+        }
+    }
+
+    void GoRegister() => Nav.NavigateTo("/register");
+
+    public class LoginModel
+    {
+        [System.ComponentModel.DataAnnotations.Required]
+        public string Email { get; set; } = string.Empty;
+        [System.ComponentModel.DataAnnotations.Required]
+        public string Password { get; set; } = string.Empty;
+    }
+}

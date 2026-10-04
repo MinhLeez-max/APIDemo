@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>QLKH - Learning Management</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="brand-badge">QL</div>
+          <div>
+            <p class="eyebrow">System</p>
+            <h1>QLKH</h1>
+          </div>
+        </div>
+
+        <nav class="nav">
+          <button class="nav-item active" data-section="dashboard">Tổng quan</button>
+          <button class="nav-item" data-section="courses">Khóa học</button>
+          <button class="nav-item" data-section="students">Học viên</button>
+          <button class="nav-item" data-section="reports">Báo cáo</button>
+        </nav>
+
+        <div class="panel auth-panel">
+          <h3>Đăng nhập</h3>
+          <form id="loginForm" class="stack-form">
+            <input type="email" id="loginEmail" placeholder="Email" required />
+            <input type="password" id="loginPassword" placeholder="Mật khẩu" required />
+            <button type="submit" class="primary-btn">Đăng nhập</button>
+          </form>
+
+          <div class="divider"><span>hoặc</span></div>
+
+          <form id="registerForm" class="stack-form">
+            <input type="text" id="registerName" placeholder="Họ và tên" required />
+            <input type="email" id="registerEmail" placeholder="Email" required />
+            <input type="password" id="registerPassword" placeholder="Mật khẩu" required />
+            <button type="submit" class="secondary-btn">Tạo tài khoản</button>
+          </form>
+        </div>
+      </aside>
+
+      <main class="content">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Dashboard</p>
+            <h2>Quản lý khóa học trực tuyến</h2>
+          </div>
+          <div class="topbar-actions">
+            <button class="ghost-btn" id="refreshCoursesBtn">Làm mới</button>
+            <button class="primary-btn" id="logoutBtn">Đăng xuất</button>
+          </div>
+        </header>
+
+        <section id="dashboard" class="section active-section">
+          <div class="stat-grid">
+            <article class="stat-card highlight">
+              <span>Tổng khóa học</span>
+              <strong id="totalCourses">0</strong>
+            </article>
+            <article class="stat-card">
+              <span>Học viên</span>
+              <strong>1,248</strong>
+            </article>
+            <article class="stat-card">
+              <span>Doanh thu</span>
+              <strong>₫84.2M</strong>
+            </article>
+            <article class="stat-card">
+              <span>Tỷ lệ hoàn thành</span>
+              <strong>78%</strong>
+            </article>
+          </div>
+
+          <div class="panel summary-panel">
+            <h3>Hoạt động gần đây</h3>
+            <ul class="activity-list">
+              <li><span>React cơ bản</span><b>12 học viên mới</b></li>
+              <li><span>API với ASP.NET</span><b>8 bài kiểm tra</b></li>
+              <li><span>UI/UX Design</span><b>4 phản hồi mới</b></li>
+            </ul>
+          </div>
+        </section>
+
+        <section id="courses" class="section">
+          <div class="panel">
+            <div class="panel-header">
+              <h3>Thêm khóa học mới</h3>
+            </div>
+            <form id="courseForm" class="course-form">
+              <div class="field-row">
+                <input type="text" id="courseTitle" placeholder="Tên khóa học" required />
+                <input type="text" id="courseCategory" placeholder="Danh mục" required />
+              </div>
+              <textarea id="courseDescription" placeholder="Mô tả khóa học" rows="4" required></textarea>
+              <div class="field-row">
+                <input type="number" id="coursePrice" placeholder="Giá khóa học" min="0" step="1000" required />
+                <button type="submit" class="primary-btn">Lưu khóa học</button>
+              </div>
+            </form>
+          </div>
+
+          <div class="panel list-panel">
+            <div class="panel-header">
+              <h3>Danh sách khóa học</h3>
+            </div>
+            <div id="courseList" class="course-list"></div>
+          </div>
+        </section>
+
+        <section id="students" class="section">
+          <div class="panel">
+            <h3>Quản lý học viên</h3>
+            <p>Chức năng học viên đang được phát triển theo mô hình API.</p>
+          </div>
+        </section>
+
+        <section id="reports" class="section">
+          <div class="panel">
+            <h3>Báo cáo</h3>
+            <p>Biểu đồ và báo cáo doanh thu sẽ được bổ sung sau.</p>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script src="/app.js"></script>
+  </body>
+</html>

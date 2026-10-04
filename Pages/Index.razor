@@ -1,0 +1,44 @@
+@page "/"
+
+<header class="topbar">
+    <div class="title">
+        <p class="eyebrow">Dashboard</p>
+        <h2>Quản lý khóa học trực tuyến</h2>
+    </div>
+    <div class="topbar-actions">
+        <button class="ghost-btn" @onclick="LoadSample">Làm mới</button>
+        <button class="primary-btn">Đăng xuất</button>
+    </div>
+</header>
+
+<section class="stat-grid">
+    <article class="stat-card highlight">
+      <span>Tổng khóa học</span>
+      <strong>12</strong>
+    </article>
+    <article class="stat-card">
+      <span>Học viên</span>
+      <strong>1,248</strong>
+    </article>
+    <article class="stat-card">
+      <span>Doanh thu</span>
+      <strong>₫84.2M</strong>
+    </article>
+    <article class="stat-card">
+      <span>Tỷ lệ hoàn thành</span>
+      <strong>78%</strong>
+    </article>
+</section>
+
+<section class="panel summary-panel">
+  <h3>Hoạt động gần đây</h3>
+  <ul class="activity-list">
+    <li><span>React cơ bản</span><b>12 học viên mới</b></li>
+    <li><span>API với ASP.NET</span><b>8 bài kiểm tra</b></li>
+    <li><span>UI/UX Design</span><b>4 phản hồi mới</b></li>
+  </ul>
+</section>
+
+@code {
+    void LoadSample() { /* placeholder for refresh action */ }
+}

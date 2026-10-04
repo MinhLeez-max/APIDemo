@@ -1,0 +1,29 @@
+@inject APIdemo.ClientServices.NotificationService Notifier
+@implements IDisposable
+
+<div class="toast" style="display:@(visible?"block":"none")">@message</div>
+
+@code {
+    private bool visible;
+    private string message = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        Notifier.OnNotify += Show;
+    }
+
+    private async void Show(string msg)
+    {
+        message = msg;
+        visible = true;
+        StateHasChanged();
+        await Task.Delay(2200);
+        visible = false;
+        StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        Notifier.OnNotify -= Show;
+    }
+}
